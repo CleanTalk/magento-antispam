@@ -1,0 +1,7 @@
+<layout version="0.1.0">
+    <default>
+        <reference name="notifications">
+            <block type="antispam/adminhtml_notifications" name="antispam_notifications" template="cleantalk/antispam/notifications.phtml"/>
+        </reference>
+    </default>
+</layout>

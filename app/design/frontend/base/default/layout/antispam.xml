@@ -1,0 +1,7 @@
+<layout version="0.1.0">
+    <default>
+        <reference name="footer">
+            <block type="antispam/antispam" name="review_product_list" template="cleantalk/antispam/page_addon.phtml" />
+        </reference>
+    </default>
+</layout>

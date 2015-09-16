@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Cleantalk_Antispam>
+            <active>true</active>
+            <codePool>community</codePool>
+	    <version>0.9.2</version>
+        </Cleantalk_Antispam>
+    </modules>
+</config>

@@ -1,0 +1,98 @@
+ <config>
+    <modules>
+        <Cleantalk_Antispam>
+            <version>1.2.0</version>
+        </Cleantalk_Antispam>
+    </modules>
+    <adminhtml>
+
+    </adminhtml>
+
+    <global>
+	<rewrite>
+    	    <cleantalk_antispam_account_createPost>
+    		<from><![CDATA[#^/customer/account/createpost/$#]]></from>
+    		<to>/antispam/customer_account/createpost</to>
+    	    </cleantalk_antispam_account_createPost>
+	    <cleantalk_antispam_index_post>
+        	<from><![CDATA[#contacts/index/post(.*)#]]></from>
+        	<to>/antispam/contacts_index/post$1</to>
+	    </cleantalk_antispam_index_post>
+	</rewrite>
+
+	<models>
+    	    <antispam>
+        	<class>Cleantalk_Antispam_Model</class>
+        	<resourceModel>antispam_resource</resourceModel>
+    	    </antispam>
+
+    	    <antispam_resource>
+        	<class>Cleantalk_Antispam_Model_Resource</class>
+        	<entities>
+            	    <server>
+            	        <table>cleantalk_server</table>
+            	    </server>
+            	    <timelabels>
+            	        <table>cleantalk_timelabels</table>
+            	    </timelabels>
+        	</entities>
+    	    </antispam_resource>
+
+           <review>
+                <rewrite>
+                    <review>Cleantalk_Antispam_Model_Review</review>
+                </rewrite>
+            </review>
+
+	</models>
+
+	<resources>
+		<cleantalk_antispam_setup>
+			<setup>
+				<module>Cleantalk_Antispam</module>
+                		<class>Mage_Core_Model_Resource_Setup</class>
+			</setup>
+		</cleantalk_antispam_setup>
+	</resources>
+
+        <blocks>
+            <antispam>
+                <class>Cleantalk_Antispam_Block</class>
+            </antispam>
+        </blocks>
+    <events>
+    		<controller_front_init_before>
+				<observers>
+					<antispam>
+						<type>singleton</type>
+						<class>antispam/observer</class>
+						<method>interceptQuery</method>
+					</antispam>
+				</observers>
+    		</controller_front_init_before>
+    		<core_block_abstract_to_html_after>
+				<observers>
+					<antispam>
+						<type>singleton</type>
+						<class>antispam/observer</class>
+						<method>interceptOutput</method>
+					</antispam>
+				</observers>
+    		</core_block_abstract_to_html_after>
+    </events>
+
+    </global>
+
+    <frontend>
+	<routers>
+    	    <antispam>
+    		<use>standard</use>
+        	<args>
+        	    <module>Cleantalk_Antispam</module>
+        	    <frontName>antispam</frontName>
+        	</args>
+    	    </antispam>
+	</routers>
+    </frontend>
+
+</config>

@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<config>
+    <sections>
+        <general>
+            <groups>
+                <cleantalk translate="label">
+                    <label>CleanTalk</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>999</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                    	<is_paid translate="label">
+                            <label>is_paid</label>
+                            <frontend_type>text</frontend_type>
+                            <comment>is_paid</comment>
+                            <sort_order>1</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </is_paid>
+                        <last_checked translate="label">
+                            <label>last_checked</label>
+                            <frontend_type>text</frontend_type>
+                            <comment>last_checked</comment>
+                            <sort_order>1</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </last_checked>
+                        <show_notice translate="label">
+                            <label>show_notice</label>
+                            <frontend_type>text</frontend_type>
+                            <comment>show_notice</comment>
+                            <sort_order>1</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </show_notice>
+                        <api_key translate="label">
+                            <label>Access Key</label>
+                            <frontend_type>text</frontend_type>
+                            <comment><![CDATA[%LINK_TEXT%]]></comment>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </api_key>
+                        <custom_forms translate="label">
+                            <label>Enable custom forms protection</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>  
+                            <comment><![CDATA[Anti spam protect for any Magento forms or themes contacts forms]]></comment>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </custom_forms>
+                    </fields>
+                </cleantalk>
+            </groups>
+        </general>
+    </sections>
+</config>
