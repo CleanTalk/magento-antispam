@@ -45,7 +45,6 @@ Current Magento module details:&#xD;
 &lt;/ul&gt;&#xD;
 &lt;/p&gt;&#xD;
 </description>
-    <notes>Fixed login form checking.</notes>
     <notes>Fixed login form checking.&#xD;
 Changed connection test method.</notes>
     <authors><author><name>CleanTalk.Org</name><user>cleantalk</user><email>welcome@cleantalk.org</email></author></authors>
