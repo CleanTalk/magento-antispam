@@ -91,7 +91,6 @@ class Cleantalk_Antispam_Model_Observer
 		    }
 		}
 		
-		$isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
 		//Mage::getSingleton('core/session', array('name'=>'adminhtml'));
 		if(isset($_COOKIE['adminhtml']))
 		{
@@ -131,14 +130,16 @@ class Cleantalk_Antispam_Model_Observer
 	    		}
 			}
 		}
-		if(!isset($_COOKIE['adminhtml'])&&$isCustomForms==1&&sizeof($_POST)>0&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false)
+		if(!isset($_COOKIE['adminhtml'])&&sizeof($_POST)>0&&strpos($_SERVER['REQUEST_URI'],'login')===false&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false)
 		{
-			
-			$sender_email = null;
-		    $message = '';
-		    Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,$_POST);
-		    if($sender_email!==null)
+		    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
+		    if($isCustomForms==1)
 		    {
+			$sender_email = null;
+			$message = '';
+			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,$_POST);
+			if($sender_email!==null)
+			{
 				$aMessage = array();
 				$aMessage['type'] = 'comment';
 				$aMessage['sender_email'] = $sender_email;
@@ -172,6 +173,7 @@ class Cleantalk_Antispam_Model_Observer
 						}
 					}
 				}
+			}
 		    }
 		}
 	}
@@ -183,17 +185,11 @@ class Cleantalk_Antispam_Model_Observer
 	public function CleantalkTestMessage($key)
 	{
 		require_once 'lib/cleantalk.class.php';
-    	$url = 'http://moderate.cleantalk.org/api2.0';
-    	$dt=Array(
-			'auth_key'=>$key,
-			'method_name'=> 'check_message',
-			'message'=>'CleanTalk connection test',
-			'example'=>null,
-			'agent'=>'magento-120',
-			'sender_ip'=>$_SERVER['REMOTE_ADDR'],
-			'sender_email'=>'stop_email@example.com',
-			'sender_nickname'=>'CleanTalk',
-			'js_on'=>1);				
+    		$url = 'http://moderate.cleantalk.org/api2.0';
+    		$dt=Array(
+		    'auth_key'=>$_POST['cleantalk_authkey'],
+		    'method_name' => 'send_feedback',
+		    'feedback' => 0 . ':' . 'magento-121');
 		$result=sendRawRequest($url,$dt,true);
 		return $result;
 	}

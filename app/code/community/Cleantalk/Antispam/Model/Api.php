@@ -114,7 +114,7 @@ ctSetCookie("%s", "%s");
         $ct_request->sender_email = isset($arEntity['sender_email']) ? $arEntity['sender_email'] : '';
         $ct_request->sender_nickname = isset($arEntity['sender_nickname']) ? $arEntity['sender_nickname'] : '';
         $ct_request->sender_ip = isset($arEntity['sender_ip']) ? $arEntity['sender_ip'] : $sender_ip;
-        $ct_request->agent = 'magento-120';
+        $ct_request->agent = 'magento-121';
         $ct_request->js_on = $checkjs;
         $ct_request->sender_info = $sender_info;
 
