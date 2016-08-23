@@ -91,7 +91,7 @@ class Cleantalk_Antispam_Model_Observer
 		    }
 		}
 		
-		//Mage::getSingleton('core/session', array('name'=>'adminhtml'));
+		//Mage::getSingleton('core/session', array('name'=>'adminhtml')); // Already was here
 		if(isset($_COOKIE['adminhtml']))
 		{
 			$key=Mage::getStoreConfig('general/cleantalk/api_key');
@@ -137,19 +137,19 @@ class Cleantalk_Antispam_Model_Observer
 		    {
 			$sender_email = null;
 			$message = '';
-			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,$_POST);
+			$ct_fields=Cleantalk_Antispam_Model_Observer::cleantalkGetFields($_POST);
 			if($sender_email!==null)
 			{
 				$aMessage = array();
 				$aMessage['type'] = 'comment';
-				$aMessage['sender_email'] = $sender_email;
-				$aMessage['sender_nickname'] = '';
+				$aMessage['sender_email'] = ($ct_fields['email'] ? $ct_fields['email'] : null);
+				$aMessage['sender_nickname'] = ($ct_fields['nickname'] ? $ct_fields['nickname'] : '');
 				$aMessage['message_title'] = '';
-				$aMessage['message_body'] = $message;
+				$aMessage['message_body'] = ($ct_fields['message'] ? $ct_fields['message'] : '');
 				$aMessage['example_title'] = '';
 				$aMessage['example_body'] = '';
 				$aMessage['example_comments'] = '';
-				
+
 				$model = Mage::getModel('antispam/api');
 				$aResult = $model->CheckSpam($aMessage, FALSE);
 				
@@ -169,7 +169,13 @@ class Cleantalk_Antispam_Model_Observer
 								$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $aResult['ct_result_comment']);
 								$comment_str = preg_replace('/<[^<>]*>/i', '', $comment_str);
 							}
-							Mage::getModel('antispam/api')->CleantalkDie($comment_str);
+							//Ajax or not
+							if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest'){
+								//AJAX fixes here
+								Mage::getModel('antispam/api')->CleantalkDie($comment_str);
+							}else{
+								Mage::getModel('antispam/api')->CleantalkDie($comment_str);
+							}
 						}
 					}
 				}
@@ -200,8 +206,8 @@ class Cleantalk_Antispam_Model_Observer
      * @param string message variable
      * @param array array, containing fields
      */
-    
-    static function cleantalkGetFields(&$email,&$message,$arr)
+    	/* NEW ONE */
+    	static function cleantalkGetFields($arr,$email=null,$nickname='',$message='')
 	{
 		$is_continue=true;
 		foreach($arr as $key=>$value)
@@ -215,24 +221,30 @@ class Cleantalk_Antispam_Model_Observer
 		}
 		if($is_continue)
 		{
-			foreach($arr as $key=>$value)
-			{
-				if(!is_array($value))
-				{
-					if ($email === null && preg_match("/^\S+@\S+\.\S+$/", $value))
-			    	{
-			            $email = $value;
-			        }
-			        else
-			        {
-			        	$message.="$value\n";
-			        }
+			foreach($arr as $key => $value){
+				if(!is_array($value)){
+					if ($email === null && preg_match("/^\S+@\S+\.\S+$/", $value)){
+						$email = $value;
+						continue;
+					}
+					if($key == 'name' || $key == 'nickname' || $key == 'firstname' || $key == 'lastname' || $key=='middlename'){
+						if($value=='')
+							continue;
+						$nickname .= " ".$value;
+						continue;
+					}else{
+						if($value=='')
+							continue;
+						$message.="$value\n";
+					}
+				}elseif(is_array($value) && !empty($value)){
+					$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields($value,$email,$nickname);
+					$email = ($ct_fields['email'] ? $ct_fields['email'] : null);
+					$nickname = ($ct_fields['nickname']!='' ? $ct_fields['nickname'] : '');
+					$message .= ($ct_fields['message']!='' ? $ct_fields['message']."\n" : '');
 				}
-				else
-				{
-					Cleantalk_Antispam_Model_Observer::cleantalkGetFields($email,$message,$value);
-				}
-			}
+			}unset($key, $value);
+			return(array('email' => $email, 'message' => trim($message), 'nickname' => trim($nickname)));
 		}
 	}
 }
