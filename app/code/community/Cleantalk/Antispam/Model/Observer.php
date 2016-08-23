@@ -137,7 +137,6 @@ class Cleantalk_Antispam_Model_Observer
 		    {
 			$sender_email = null;
 			$message = '';
-			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,$_POST);
 			$ct_fields=Cleantalk_Antispam_Model_Observer::cleantalkGetFields($_POST);
 			if($sender_email!==null)
 			{
