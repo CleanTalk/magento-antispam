@@ -61,20 +61,22 @@ ctSetCookie("%s", "%s");
         $type = $arEntity['type'];
         if($type != 'comment' && $type != 'register') return;
 
-	$ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
+		$ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
         $ct_ws = self::GetWorkServer();
 
-        if (!session_id()) session_start();
+		if(!(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest'))
+			if (!session_id())
+				session_start(); //This one is causing errors with ajax
 
-	if (!isset($_COOKIE['ct_checkjs'])) {
-	    $checkjs = NULL;
-	}
-	elseif ($_COOKIE['ct_checkjs'] == self::GetCheckJSValue()) {
-	    $checkjs = 1;
-	}
-	else {
-	    $checkjs = 0;
-	}
+		if (!isset($_COOKIE['ct_checkjs'])) {
+			$checkjs = NULL;
+		}
+		elseif ($_COOKIE['ct_checkjs'] == self::GetCheckJSValue()) {
+			$checkjs = 1;
+		}
+		else {
+			$checkjs = 0;
+		}
 
         if(isset($_SERVER['HTTP_USER_AGENT']))
             $user_agent = htmlspecialchars((string) $_SERVER['HTTP_USER_AGENT']);
@@ -104,10 +106,10 @@ ctSetCookie("%s", "%s");
         $ct->server_ttl = $ct_ws['server_ttl'];
         $ct->server_changed = $ct_ws['server_changed'];
 
-	if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
-	    $forwarded_for = (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? htmlentities($_SERVER['HTTP_X_FORWARDED_FOR']) : '';
-	}
-        $sender_ip = (!empty($forwarded_for)) ? $forwarded_for : $_SERVER['REMOTE_ADDR'];
+		if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+			$forwarded_for = (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? htmlentities($_SERVER['HTTP_X_FORWARDED_FOR']) : '';
+		}
+			$sender_ip = (!empty($forwarded_for)) ? $forwarded_for : $_SERVER['REMOTE_ADDR'];
 
         $ct_request = new CleantalkRequest();
         $ct_request->auth_key = $ct_key;
