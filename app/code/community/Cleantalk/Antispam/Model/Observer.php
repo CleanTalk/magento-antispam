@@ -2,17 +2,6 @@
 
 class Cleantalk_Antispam_Model_Observer
 {
-	
-	/* //For Debugging. Outputs $_POST into log.
-	public function hookToControllerActionPostDispatch($observer) {
-		$ct_log='';
-		if(!empty($_POST)){
-			$ct_log = Cleantalk_Antispam_Model_Observer::cleantalkArrayToString($_POST);
-		}
-		Mage::log("Request URI: ".$_SERVER['REQUEST_URI']."\n$ct_log-------------------");
-	}
-	//*/
-	
 	public function interceptOutput(Varien_Event_Observer $observer)
 	{
 		$transport = $observer->getTransport();
@@ -102,7 +91,7 @@ class Cleantalk_Antispam_Model_Observer
 		    }
 		}
 		
-		//Mage::getSingleton('core/session', array('name'=>'adminhtml')); //Was here already
+		//Mage::getSingleton('core/session', array('name'=>'adminhtml'));
 		if(isset($_COOKIE['adminhtml']))
 		{
 			$key=Mage::getStoreConfig('general/cleantalk/api_key');
@@ -141,57 +130,50 @@ class Cleantalk_Antispam_Model_Observer
 	    		}
 			}
 		}
-		if(!isset($_COOKIE['adminhtml'])&&sizeof($_POST)>0&&strpos($_SERVER['REQUEST_URI'],'login')===false&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false){
+		if(!isset($_COOKIE['adminhtml'])&&sizeof($_POST)>0&&strpos($_SERVER['REQUEST_URI'],'login')===false&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false)
+		{
 		    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
-		    if($isCustomForms==1){
+		    if($isCustomForms==1)
+		    {
+			$sender_email = null;
+			$message = '';
+			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,$_POST);
+			if($sender_email!==null)
+			{
+				$aMessage = array();
+				$aMessage['type'] = 'comment';
+				$aMessage['sender_email'] = $sender_email;
+				$aMessage['sender_nickname'] = '';
+				$aMessage['message_title'] = '';
+				$aMessage['message_body'] = $message;
+				$aMessage['example_title'] = '';
+				$aMessage['example_body'] = '';
+				$aMessage['example_comments'] = '';
 				
-				$ct_fields=Cleantalk_Antispam_Model_Observer::cleantalkGetFields($_POST);
-				//Additional conditions for OneStepCheckut extension
-				if($ct_fields['email']!==null){
-					if(	$_SERVER['REQUEST_URI']=="/onestepcheckout/ajax/saveFormValues/" ||
-						$_SERVER['REQUEST_URI']=="/onestepcheckout/ajax/saveAddress/" ||
-						$_SERVER['REQUEST_URI']=="/onestepcheckout/ajax/saveShippingMethod/"
-					)
-						break;
-					
-					$aMessage = array();
-					$aMessage['type'] = 'comment';
-					$aMessage['sender_email'] = ($ct_fields['email'] ? $ct_fields['email'] : null);
-					$aMessage['sender_nickname'] = ($ct_fields['nickname'] ? $ct_fields['nickname'] : '');
-					$aMessage['message_title'] = '';
-					$aMessage['message_body'] = ($ct_fields['message'] ? $ct_fields['message'] : '');
-					$aMessage['example_title'] = '';
-					$aMessage['example_body'] = '';
-					$aMessage['example_comments'] = '';
-										
-					$model = Mage::getModel('antispam/api');
-					$aResult = $model->CheckSpam($aMessage, FALSE);
-										
-					if(isset($aResult) && is_array($aResult))
+				$model = Mage::getModel('antispam/api');
+				$aResult = $model->CheckSpam($aMessage, FALSE);
+				
+				if(isset($aResult) && is_array($aResult))
+				{
+					if($aResult['errno'] == 0)
 					{
-						if($aResult['errno'] == 0)
+						if($aResult['allow'] == 0)
 						{
-							if($aResult['allow'] == 0)
+							if (preg_match('//u', $aResult['ct_result_comment']))
 							{
-								if (preg_match("//u", $aResult['ct_result_comment'])){
-									$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $aResult['ct_result_comment']);
-									$comment_str = preg_replace('/<[^<>]*>/iu', '', $comment_str);
-								}else{
-									$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $aResult['ct_result_comment']);
-									$comment_str = preg_replace('/<[^<>]*>/i', '', $comment_str);
-								}
-								//Onestepcheckout fix
-								if($_SERVER['REQUEST_URI'] == "/onestepcheckout/ajax/placeOrder/"){
-									echo '{"success":false,"messages":["Spam protection by CleanTalk: '.$comment_str.'"],"is_hosted_pro":false}';
-									die();
-								}else{
-									Mage::getModel('antispam/api')->CleantalkDie($comment_str);
-									die();
-								}
+								$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $aResult['ct_result_comment']);
+								$comment_str = preg_replace('/<[^<>]*>/iu', '', $comment_str);
 							}
+							else
+							{
+								$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $aResult['ct_result_comment']);
+								$comment_str = preg_replace('/<[^<>]*>/i', '', $comment_str);
+							}
+							Mage::getModel('antispam/api')->CleantalkDie($comment_str);
 						}
 					}
 				}
+			}
 		    }
 		}
 	}
@@ -207,7 +189,7 @@ class Cleantalk_Antispam_Model_Observer
     		$dt=Array(
 		    'auth_key'=>$_POST['cleantalk_authkey'],
 		    'method_name' => 'send_feedback',
-		    'feedback' => 0 . ':' . 'magento-121');
+		    'feedback' => 0 . ':' . 'magento-123');
 		$result=sendRawRequest($url,$dt,true);
 		return $result;
 	}
@@ -219,53 +201,40 @@ class Cleantalk_Antispam_Model_Observer
      * @param array array, containing fields
      */
     
-    static function cleantalkGetFields($arr, $email=null, $nickname='', $message='')
+    static function cleantalkGetFields(&$email,&$message,$arr)
 	{
 		$is_continue=true;
-		foreach($arr as $key => $value){
-			if(strpos($key,'ct_checkjs')!==false){
+		foreach($arr as $key=>$value)
+		{
+			if(strpos($key,'ct_checkjs')!==false)
+			{
 				$email=null;
 				$message='';
 				$is_continue=false;
 			}
 		}
-		if($is_continue){
-			foreach($arr as $key => $value){
-				if(!is_array($value)){
-					if($value!=''){
-						if ($email === null && preg_match("/^\S+@\S+\.\S+$/", $value)){
-							$email = $value;
-						}elseif(strpos($key, 'name')){
-							$nickname .= " ".$value;
-						}else{
-							$message.="$value\n";
-						}
-					}
-				}elseif(count($value)){
-					$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields($value,$email,$nickname);
-					$email = ($ct_fields['email'] ? $ct_fields['email'] : null);
-					$nickname = ($ct_fields['nickname']!='' ? $ct_fields['nickname'] : '');
-					$message .= ($ct_fields['message']!='' ? $ct_fields['message']."\n" : '');
+		if($is_continue)
+		{
+			foreach($arr as $key=>$value)
+			{
+				if(!is_array($value))
+				{
+					if ($email === null && preg_match("/^\S+@\S+\.\S+$/", $value))
+			    	{
+			            $email = $value;
+			        }
+			        else
+			        {
+			        	$message.="$value\n";
+			        }
+				}
+				else
+				{
+					Cleantalk_Antispam_Model_Observer::cleantalkGetFields($email,$message,$value);
 				}
 			}
-			unset($key, $value);
-			return(array('email' => $email, 'message' => trim($message), 'nickname' => trim($nickname)));
 		}
 	}
-	//Debug method, return string with array
-	static function cleantalkArrayToString($arr='', $t=''){
-		if(empty($arr))
-			return '';
-		$ret_str = '';
-		foreach($arr as $k => $v){
-			if(is_array($v)){
-				$ret_str .= "$k => Array:\n";
-				$ret_str .= Cleantalk_Antispam_Model_Observer::cleantalkArrayToString($v, $t."\t");
-			}else
-				$ret_str.="$t$k => $v\n";
-		}
-		return $ret_str;
-	 }
 }
 
 ?>
