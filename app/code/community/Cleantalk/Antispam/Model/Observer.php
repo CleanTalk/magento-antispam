@@ -6,9 +6,9 @@ class Cleantalk_Antispam_Model_Observer
 	{
 		$transport = $observer->getTransport();
 		$html = $transport->getHtml();
-		if(strpos($html,'<div class="middle"')!==false&&isset($_GET['cleantalk_message']))
+		if(strpos($html,'<div class="middle"')!==false && Mage::app()->getRequest()->getParam('cleantalk_message')!== null)
 		{
-			$html=str_replace('<div class="middle"','<div class="notification-global  notification-global-error"><b>CleanTalk error: '.$_GET['cleantalk_message'].'</b></div><div class="middle"',$html);
+			$html=str_replace('<div class="middle"','<div class="notification-global  notification-global-error"><b>CleanTalk error: '.Mage::app()->getRequest()->getParam('cleantalk_message').'</b></div><div class="middle"',$html);
 			$transport->setHtml($html);
 		}
 		$show_notice=intval(Mage::getStoreConfig('general/cleantalk/show_notice'));
@@ -24,7 +24,8 @@ class Cleantalk_Antispam_Model_Observer
 			if(trim($api_key)=='')
 			{
 				Mage::app()->cleanCache();
-				$admin_email=Mage::getStoreConfig('trans_email/ident_general/email');
+				$user = Mage::getSingleton('admin/session'); 
+				$admin_email = $user->getUser()->getEmail();
 				$button="<input type='button' style='margin-top:5px;-webkit-border-bottom-left-radius: 5px;-webkit-border-bottom-right-radius: 5px;-webkit-border-radius: 5px;-webkit-border-top-left-radius: 5px;-webkit-border-top-right-radius: 5px;background: #3399FF;border-radius: 5px;box-sizing: border-box;color: #FFFFFF;font: normal normal 400 14px/16.2px \"Open Sans\";padding:3px;border:0px none;cursor:pointer;' value='Get access key automatically' onclick='location.href=\"?get_auto_key=1\"'><br /><a target='_blank' href='https://cleantalk.org/register?platform=magento&email=".$admin_email."&website=".$_SERVER['HTTP_HOST']."'>Click here to get access key manually</a><br />Admin e-mail (".$admin_email.") will be used for registration<br /><a target='__blank' href='http://cleantalk.org/publicoffer' style='color:#e5e5e5'>License agreement</a>";
 				$html=str_replace('%LINK_TEXT%',$button,$html);
 			}
@@ -38,22 +39,23 @@ class Cleantalk_Antispam_Model_Observer
 	}
 	public function interceptQuery(Varien_Event_Observer $observer)
 	{
-		if(isset($_GET['close_notice']))
+		if(Mage::app()->getRequest()->getParam('close_notice') !== null)
 		{
 			$config = new Mage_Core_Model_Config();
 			$config->saveConfig('general/cleantalk/show_notice', 0, 'default', 0);
 			Mage::app()->cleanCache();
 			header('Location: .');
-			die();
+			return false;
 		}
 		
-		if(isset($_GET['get_auto_key']))
+		if(Mage::app()->getRequest()->getParam('get_auto_key')!== null)
 		{
 			Mage::getSingleton('core/session', array('name'=>'adminhtml'));
 			if(Mage::getSingleton('admin/session')->isLoggedIn())
 			{
 				require_once 'lib/cleantalk.class.php';
-				$admin_email=Mage::getStoreConfig('trans_email/ident_general/email');
+				$user = Mage::getSingleton('admin/session'); 
+				$admin_email = $user->getUser()->getEmail();
 				$site=$_SERVER['HTTP_HOST'];
 				$result = getAutoKey($admin_email,$site,'magento');
 				if ($result)
@@ -66,7 +68,7 @@ class Cleantalk_Antispam_Model_Observer
 					else if(isset($result['error_no']))
 					{
 						header('Location: ?cleantalk_message='.$result['error_message']);
-						die();
+						return false;
 					}
 					if(isset($result['auth_key']))
 					{
@@ -76,14 +78,15 @@ class Cleantalk_Antispam_Model_Observer
 						Cleantalk_Antispam_Model_Observer::CleantalkTestMessage($result['auth_key']);
 					}
 					header('Location: .');
-					die();
+					return false;
+					
 				}
 			}
 		}
 		
-		if(isset($_POST['groups']['cleantalk']['fields']['api_key']['value']))
+		if(Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value']!==null)
 		{
-			$new_key=$_POST['groups']['cleantalk']['fields']['api_key']['value'];
+			$new_key=Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'];
 			$old_key = Mage::getStoreConfig('general/cleantalk/api_key');
 			if($old_key!=$new_key&&$new_key!='')
 		    {
@@ -130,14 +133,14 @@ class Cleantalk_Antispam_Model_Observer
 	    		}
 			}
 		}
-		if(!isset($_COOKIE['adminhtml'])&&sizeof($_POST)>0&&strpos($_SERVER['REQUEST_URI'],'login')===false&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false)
+		if(!isset($_COOKIE['adminhtml'])&&sizeof(Mage::app()->getRequest()->getPost())>0&&strpos($_SERVER['REQUEST_URI'],'login')===false&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false)
 		{
 		    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
 		    if($isCustomForms==1)
 		    {
 			$sender_email = null;
 			$message = '';
-			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,$_POST);
+			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,Mage::app()->getRequest()->getPost());
 			if($sender_email!==null)
 			{
 				$aMessage = array();
@@ -187,7 +190,7 @@ class Cleantalk_Antispam_Model_Observer
 		require_once 'lib/cleantalk.class.php';
     		$url = 'http://moderate.cleantalk.org/api2.0';
     		$dt=Array(
-		    'auth_key'=>$_POST['cleantalk_authkey'],
+		    'auth_key'=>Mage::app()->getRequest()->getPost()['cleantalk_authkey'],
 		    'method_name' => 'send_feedback',
 		    'feedback' => 0 . ':' . 'magento-123');
 		$result=sendRawRequest($url,$dt,true);
@@ -236,5 +239,3 @@ class Cleantalk_Antispam_Model_Observer
 		}
 	}
 }
-
-?>

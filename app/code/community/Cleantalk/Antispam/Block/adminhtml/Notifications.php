@@ -15,4 +15,3 @@ class Cleantalk_Antispam_Block_Adminhtml_Notifications extends Mage_Adminhtml_Bl
         return $message;
     }
 }
-?>

@@ -14,11 +14,11 @@ class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
      */
      
      static function CleantalkDie($message)
-	{
-		$error_tpl=file_get_contents(dirname(__FILE__)."/error.html");
-		print str_replace('%ERROR_TEXT%',$message,$error_tpl);
-		die();
-	}
+    {
+        $error_tpl=file_get_contents(dirname(__FILE__)."/error.html");
+        $error_str = str_replace('%ERROR_TEXT%',$message,$error_tpl);
+        $this->__($error_str);
+    }
      
 
     /**
@@ -28,14 +28,15 @@ class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
      */
     static function PageAddon() {
         if (!session_id()) session_start();
-	$_SESSION['ct_submit_time'] = time();
+        $session = Mage::getSingleton("core/session",  array("name"=>"frontend"));
+        $session->setData("ct_submit_time", time());
 
-	$field_name = 'ct_checkjs';	// todo - move this to class constant
-	$ct_check_def = '0';
-	if (!isset($_COOKIE[$field_name])) setcookie($field_name, $ct_check_def, 0, '/');
+    $field_name = 'ct_checkjs'; // todo - move this to class constant
+    $ct_check_def = '0';
+    if (!isset($_COOKIE[$field_name])) setcookie($field_name, $ct_check_def, 0, '/');
 
-	$ct_check_value = self::GetCheckJSValue();
-	$js_template = '<script type="text/javascript">
+    $ct_check_value = self::GetCheckJSValue();
+    $js_template = '<script type="text/javascript">
 // <![CDATA[
 function ctSetCookie(c_name, value) {
  document.cookie = c_name + "=" + escape(value) + "; path=/";
@@ -44,8 +45,8 @@ ctSetCookie("%s", "%s");
 // ]]>
 </script>
 ';
-	$ct_template_addon_body = sprintf($js_template, $field_name, $ct_check_value);
-	return $ct_template_addon_body;
+    $ct_template_addon_body = sprintf($js_template, $field_name, $ct_check_value);
+    return $ct_template_addon_body;
     }
 
     /**
@@ -61,20 +62,20 @@ ctSetCookie("%s", "%s");
         $type = $arEntity['type'];
         if($type != 'comment' && $type != 'register') return;
 
-	$ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
+    $ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
         $ct_ws = self::GetWorkServer();
 
         if (!session_id()) session_start();
 
-	if (!isset($_COOKIE['ct_checkjs'])) {
-	    $checkjs = NULL;
-	}
-	elseif ($_COOKIE['ct_checkjs'] == self::GetCheckJSValue()) {
-	    $checkjs = 1;
-	}
-	else {
-	    $checkjs = 0;
-	}
+    if (!isset($_COOKIE['ct_checkjs'])) {
+        $checkjs = NULL;
+    }
+    elseif ($_COOKIE['ct_checkjs'] == self::GetCheckJSValue()) {
+        $checkjs = 1;
+    }
+    else {
+        $checkjs = 0;
+    }
 
         if(isset($_SERVER['HTTP_USER_AGENT']))
             $user_agent = htmlspecialchars((string) $_SERVER['HTTP_USER_AGENT']);
@@ -86,7 +87,7 @@ ctSetCookie("%s", "%s");
         else
             $refferrer = NULL;
 
-	$ct_language = 'en';
+    $ct_language = 'en';
 
         $sender_info = array(
             'cms_lang' => $ct_language,
@@ -104,9 +105,9 @@ ctSetCookie("%s", "%s");
         $ct->server_ttl = $ct_ws['server_ttl'];
         $ct->server_changed = $ct_ws['server_changed'];
 
-	if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
-	    $forwarded_for = (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? htmlentities($_SERVER['HTTP_X_FORWARDED_FOR']) : '';
-	}
+    if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
+        $forwarded_for = (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? htmlentities($_SERVER['HTTP_X_FORWARDED_FOR']) : '';
+    }
         $sender_ip = (!empty($forwarded_for)) ? $forwarded_for : $_SERVER['REMOTE_ADDR'];
 
         $ct_request = new CleantalkRequest();
@@ -117,10 +118,10 @@ ctSetCookie("%s", "%s");
         $ct_request->agent = 'magento-123';
         $ct_request->js_on = $checkjs;
         $ct_request->sender_info = $sender_info;
-
+        $session = Mage::getSingleton("core/session",  array("name"=>"frontend"));
         $ct_submit_time = NULL;
-        if(isset($_SESSION['ct_submit_time']))
-        $ct_submit_time = time() - $_SESSION['ct_submit_time'];
+        if($session->getData("ct_submit_time")!==null)
+        $ct_submit_time = time() - $session->getData("ct_submit_time");
 
         switch ($type) {
             case 'comment':
@@ -183,18 +184,18 @@ ctSetCookie("%s", "%s");
             $err_title = $_SERVER['SERVER_NAME'] . ' - CleanTalk module error';
 
             if(!empty($ct_result->errstr)){
-		    if (preg_match('//u', $ct_result->errstr)){
-            		    $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $ct_result->errstr);
-		    }else{
-            		    $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $ct_result->errstr);
-		    }
+            if (preg_match('//u', $ct_result->errstr)){
+                        $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $ct_result->errstr);
             }else{
-		    if (preg_match('//u', $ct_result->comment)){
-			    $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $ct_result->comment);
-		    }else{
-			    $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $ct_result->comment);
-		    }
-	    }
+                        $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $ct_result->errstr);
+            }
+            }else{
+            if (preg_match('//u', $ct_result->comment)){
+                $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $ct_result->comment);
+            }else{
+                $err_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $ct_result->comment);
+            }
+        }
             $ret_val['errstr'] = $err_str;
 
             $timedata = FALSE;
@@ -317,7 +318,7 @@ ctSetCookie("%s", "%s");
      * @return string System depending md5 hash
      */
     static function GetCheckJSValue() {
-	return md5(Mage::getStoreConfig('general/cleantalk/api_key') . '_' . Mage::getStoreConfig('trans_email/ident_general/email'));
+    return md5(Mage::getStoreConfig('general/cleantalk/api_key') . '_' . Mage::getStoreConfig('trans_email/ident_general/email'));
     }
 
 }// class Cleantalk_Antispam_Model_Api
