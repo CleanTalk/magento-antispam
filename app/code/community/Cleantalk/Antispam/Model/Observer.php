@@ -138,44 +138,46 @@ class Cleantalk_Antispam_Model_Observer
 		    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
 		    if($isCustomForms==1)
 		    {
-			$sender_email = null;
-			$message = '';
-			Cleantalk_Antispam_Model_Observer::cleantalkGetFields($sender_email,$message,Mage::app()->getRequest()->getPost());
-			if($sender_email!==null)
+			$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields(Mage::app()->getRequest()->getPost());
+			if($ct_fields)
 			{
 				$aMessage = array();
 				$aMessage['type'] = 'comment';
-				$aMessage['sender_email'] = $sender_email;
-				$aMessage['sender_nickname'] = '';
+				$aMessage['sender_email'] = ($ct_fields['email'] ? $ct_fields['email'] : '');
+				$aMessage['sender_nickname'] = ($ct_fields['nickname'] ? $ct_fields['nickname'] : '');
 				$aMessage['message_title'] = '';
-				$aMessage['message_body'] = $message;
+				$aMessage['message_body'] =($ct_fields['message'] ? $ct_fields['message'] : '');
 				$aMessage['example_title'] = '';
 				$aMessage['example_body'] = '';
 				$aMessage['example_comments'] = '';
-				
+				$aMessage['send_request'] = ($ct_fields['message'] || $ct_fields['email']) ? true: false;
 				$model = Mage::getModel('antispam/api');
-				$aResult = $model->CheckSpam($aMessage, FALSE);
-				
-				if(isset($aResult) && is_array($aResult))
+				if ($aMessage['send_request'])
 				{
-					if($aResult['errno'] == 0)
+					$aResult = $model->CheckSpam($aMessage, FALSE);
+					
+					if(isset($aResult) && is_array($aResult))
 					{
-						if($aResult['allow'] == 0)
+						if($aResult['errno'] == 0)
 						{
-							if (preg_match('//u', $aResult['ct_result_comment']))
+							if($aResult['allow'] == 0)
 							{
-								$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $aResult['ct_result_comment']);
-								$comment_str = preg_replace('/<[^<>]*>/iu', '', $comment_str);
+								if (preg_match('//u', $aResult['ct_result_comment']))
+								{
+									$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/iu', '', $aResult['ct_result_comment']);
+									$comment_str = preg_replace('/<[^<>]*>/iu', '', $comment_str);
+								}
+								else
+								{
+									$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $aResult['ct_result_comment']);
+									$comment_str = preg_replace('/<[^<>]*>/i', '', $comment_str);
+								}
+								Mage::getModel('antispam/api')->CleantalkDie($comment_str);
 							}
-							else
-							{
-								$comment_str = preg_replace('/^[^\*]*?\*\*\*|\*\*\*[^\*]*?$/i', '', $aResult['ct_result_comment']);
-								$comment_str = preg_replace('/<[^<>]*>/i', '', $comment_str);
-							}
-							Mage::getModel('antispam/api')->CleantalkDie($comment_str);
 						}
-					}
+					}					
 				}
+
 			}
 		    }
 		}
@@ -192,7 +194,7 @@ class Cleantalk_Antispam_Model_Observer
     		$dt=Array(
 		    'auth_key'=>Mage::app()->getRequest()->getPost()['cleantalk_authkey'],
 		    'method_name' => 'send_feedback',
-		    'feedback' => 0 . ':' . 'magento-123');
+		    'feedback' => 0 . ':' . 'magento-124');
 		$result=sendRawRequest($url,$dt,true);
 		return $result;
 	}
@@ -204,38 +206,213 @@ class Cleantalk_Antispam_Model_Observer
      * @param array array, containing fields
      */
     
-    static function cleantalkGetFields(&$email,&$message,$arr)
+    static function cleantalkGetFields($arr, $message=array(), $email = null, $nickname = array('nick' => '', 'first' => '', 'last' => ''), $subject = null, $contact = true, $prev_name = '')
 	{
-		$is_continue=true;
-		foreach($arr as $key=>$value)
-		{
-			if(strpos($key,'ct_checkjs')!==false)
-			{
-				$email=null;
-				$message='';
-				$is_continue=false;
-			}
-		}
-		if($is_continue)
-		{
-			foreach($arr as $key=>$value)
-			{
-				if(!is_array($value))
-				{
-					if ($email === null && preg_match("/^\S+@\S+\.\S+$/", $value))
-			    	{
-			            $email = $value;
-			        }
-			        else
-			        {
-			        	$message.="$value\n";
-			        }
-				}
-				else
-				{
-					Cleantalk_Antispam_Model_Observer::cleantalkGetFields($email,$message,$value);
-				}
-			}
-		}
+        //Skip request if fields exists
+        $skip_params = array(
+            'ipn_track_id',     // PayPal IPN #
+            'txn_type',         // PayPal transaction type
+            'payment_status',   // PayPal payment status
+            'ccbill_ipn',       // CCBill IPN 
+            'ct_checkjs',       // skip ct_checkjs field
+            'api_mode',         // DigiStore-API
+            'loadLastCommentId' // Plugin: WP Discuz. ticket_id=5571
+        );
+        
+        // Fields to replace with ****
+        $obfuscate_params = array(
+            'password',
+            'password_confirmation',
+            'pass',
+            'pwd',
+            'pswd'
+        );
+        
+        // Skip feilds with these strings and known service fields
+        $skip_fields_with_strings = array( 
+            // Common
+            'ct_checkjs', //Do not send ct_checkjs
+            'nonce', //nonce for strings such as 'rsvp_nonce_name'
+            'security',
+            // 'action',
+            'http_referer',
+            'timestamp',
+            'captcha',
+            // Formidable Form
+            'form_key',
+            'submit_entry',
+            // Custom Contact Forms
+            'form_id',
+            'ccf_form',
+            'form_page',
+            // Qu Forms
+            'iphorm_uid',
+            'form_url',
+            'post_id',
+            'iphorm_ajax',
+            'iphorm_id',
+            // Fast SecureContact Froms
+            'fs_postonce_1',
+            'fscf_submitted',
+            'mailto_id',
+            'si_contact_action',
+            // Ninja Forms
+            'formData_id',
+            'formData_settings',
+            'formData_fields_\d+_id',
+            'formData_fields_\d+_files.*',      
+            // E_signature
+            'recipient_signature',
+            'output_\d+_\w{0,2}',
+            // Contact Form by Web-Settler protection
+            '_formId',
+            '_returnLink',
+            // Social login and more
+            '_save',
+            '_facebook',
+            '_social',
+            'user_login-',
+            'submit',
+            'form_token',
+            'creation_time',
+            'uenc',
+            'product',
+
+        );
+                
+        foreach($skip_params as $value){
+            if(array_key_exists($value,Mage::app()->getRequest()->getPost()))
+            {
+                $contact = false;
+            }
+        } unset($value);
+            
+        if(count($arr)){
+            foreach($arr as $key => $value){
+                
+                if(gettype($value)=='string'){
+                    $decoded_json_value = json_decode($value, true);
+                    if($decoded_json_value !== null)
+                    {
+                        $value = $decoded_json_value;
+                    }
+                }
+                
+                if(!is_array($value) && !is_object($value)){
+                    
+                    if (in_array($key, $skip_params, true) && $key != 0 && $key != '' || preg_match("/^ct_checkjs/", $key))
+                    {
+                        $contact = false;
+                    }
+                    
+                    if($value === '')
+                    {
+                        continue;
+                    }
+                    
+                    // Skipping fields names with strings from (array)skip_fields_with_strings
+                    foreach($skip_fields_with_strings as $needle){
+                        if (preg_match("/".$needle."/", $prev_name.$key) == 1){
+                            continue(2);
+                        }
+                    }unset($needle);
+                    // Obfuscating params
+                    foreach($obfuscate_params as $needle){
+                        if (strpos($key, $needle) !== false){
+                            $value = Cleantalk_Antispam_Model_Observer::obfuscate_param($value);
+                        }
+                    }unset($needle);
+                    
+
+                    // Decodes URL-encoded data to string.
+                    $value = urldecode($value); 
+
+                    // Email
+                    if (!$email && preg_match("/^\S+@\S+\.\S+$/", $value)){
+                        $email = $value;
+                        
+                    // Names
+                    }elseif (preg_match("/name/i", $key)){
+                        
+                        preg_match("/(first.?name)?(name.?first)?(forename)?/", $key, $match_forename);
+                        preg_match("/(last.?name)?(family.?name)?(second.?name)?(surname)?/", $key, $match_surname);
+                        preg_match("/(nick.?name)?(user.?name)?(nick)?/", $key, $match_nickname);
+                        
+                        if(count($match_forename) > 1)
+                        {
+                            $nickname['first'] = $value;
+                        }
+                        elseif(count($match_surname) > 1)
+                        {
+                            $nickname['last'] = $value;
+                        }
+                        elseif(count($match_nickname) > 1)
+                        {
+                            $nickname['nick'] = $value;
+                        }
+                        else
+                        {
+                            $message[$prev_name.$key] = $value;
+                        }
+                    
+                    // Subject
+                    }elseif ($subject === null && preg_match("/subject/i", $key)){
+                        $subject = $value;
+                    
+                    // Message
+                    }else{
+                        $message[$prev_name.$key] = $value;                 
+                    }
+                    
+                }elseif(!is_object($value)){
+                    
+                    $prev_name_original = $prev_name;
+                    $prev_name = ($prev_name === '' ? $key.'_' : $prev_name.$key.'_');
+                    
+                    $temp = Cleantalk_Antispam_Model_Observer::cleantalkGetFields($value, $message, $email, $nickname, $subject, $contact, $prev_name);
+                    
+                    $message    = $temp['message'];
+                    $email      = ($temp['email']       ? $temp['email'] : null);
+                    $nickname   = ($temp['nickname']    ? $temp['nickname'] : null);                
+                    $subject    = ($temp['subject']     ? $temp['subject'] : null);
+                    if($contact === true)
+                    {
+                        $contact = ($temp['contact'] === false ? false : true);
+                    }
+                    $prev_name  = $prev_name_original;
+                }
+            } unset($key, $value);
+        }
+                
+        //If top iteration, returns compiled name field. Example: "Nickname Firtsname Lastname".
+        if($prev_name === ''){
+            if(!empty($nickname)){
+                $nickname_str = '';
+                foreach($nickname as $value){
+                    $nickname_str .= ($value ? $value." " : "");
+                }unset($value);
+            }
+            $nickname = $nickname_str;
+        }
+        
+        $return_param = array(
+            'email'     => $email,
+            'nickname'  => $nickname,
+            'subject'   => $subject,
+            'contact'   => $contact,
+            'message'   => $message
+        );  
+        return $return_param;
 	}
+	    /**
+    * Masks a value with asterisks (*)
+    * @return string
+    */
+    static function obfuscate_param($value = null) {
+        if ($value && (!is_object($value) || !is_array($value))) {
+            $length = strlen($value);
+            $value = str_repeat('*', $length);
+        }
+        return $value;
+    }  
 }
