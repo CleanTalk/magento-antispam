@@ -139,7 +139,7 @@ class Cleantalk_Antispam_Model_Observer
 		    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
 		    if($isCustomForms==1)
 		    {
-			$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields($_POST);
+			$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields(Mage::app()->getRequest()->getPost());
 			if($ct_fields)
 			{
 				$aMessage = array();
@@ -282,7 +282,7 @@ class Cleantalk_Antispam_Model_Observer
         );
                 
         foreach($skip_params as $value){
-            if(array_key_exists($value,$_POST))
+            if(array_key_exists($value,Mage::app()->getRequest()->getPost()))
             {
                 $contact = false;
             }
