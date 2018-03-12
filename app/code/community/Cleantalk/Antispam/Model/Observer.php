@@ -95,7 +95,7 @@ class Cleantalk_Antispam_Model_Observer
 		}
 		
 		//Mage::getSingleton('core/session', array('name'=>'adminhtml'));
-		if(isset($_COOKIE['adminhtml']))
+		if(Mage::getSingleton('admin/session')->isLoggedIn())
 		{
 			$key=Mage::getStoreConfig('general/cleantalk/api_key');
 	        $last_checked=intval(Mage::getStoreConfig('general/cleantalk/last_checked'));
@@ -133,12 +133,13 @@ class Cleantalk_Antispam_Model_Observer
 	    		}
 			}
 		}
-		if(!isset($_COOKIE['adminhtml'])&&sizeof(Mage::app()->getRequest()->getPost())>0&&strpos($_SERVER['REQUEST_URI'],'login')===false&&strpos($_SERVER['REQUEST_URI'],'forgotpassword')===false)
+		if(!Mage::getSingleton('admin/session')->isLoggedIn() && sizeof(Mage::app()->getRequest()->getPost())>0 && strpos($_SERVER['PHP_SELF'],'/account/create/') === false && strpos($_SERVER['REQUEST_URI'],'/account/forgotpassword/') === false && strpos($_SERVER['PHP_SELF'],'/account/login/') === false)
 		{
+
 		    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
 		    if($isCustomForms==1)
 		    {
-			$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields(Mage::app()->getRequest()->getPost());
+			$ct_fields = Cleantalk_Antispam_Model_Observer::cleantalkGetFields($_POST);
 			if($ct_fields)
 			{
 				$aMessage = array();
@@ -281,7 +282,7 @@ class Cleantalk_Antispam_Model_Observer
         );
                 
         foreach($skip_params as $value){
-            if(array_key_exists($value,Mage::app()->getRequest()->getPost()))
+            if(array_key_exists($value,$_POST))
             {
                 $contact = false;
             }
