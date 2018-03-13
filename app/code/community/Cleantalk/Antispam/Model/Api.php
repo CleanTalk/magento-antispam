@@ -27,9 +27,6 @@ class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
      * @return string Template addon text
      */
     static function PageAddon() {
-        if (!session_id()) session_start();
-        $session = Mage::getSingleton("core/session",  array("name"=>"frontend"));
-        $session->setData("ct_submit_time", time());
 
     $field_name = 'ct_checkjs'; // todo - move this to class constant
     $ct_check_def = '0';
@@ -65,7 +62,6 @@ ctSetCookie("%s", "%s");
     $ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
         $ct_ws = self::GetWorkServer();
 
-        if (!session_id()) session_start();
 
     if (!isset($_COOKIE['ct_checkjs'])) {
         $checkjs = NULL;
@@ -93,7 +89,8 @@ ctSetCookie("%s", "%s");
             'cms_lang' => $ct_language,
             'REFFERRER' => $refferrer,
             'post_url' => $refferrer,
-            'USER_AGENT' => $user_agent
+            'USER_AGENT' => $user_agent,
+            'REFFERRER_PREVIOUS' => isset($_COOKIE['apbct_prev_referer']) ? $_COOKIE['apbct_prev_referer'] : null,
         );
         $sender_info = json_encode($sender_info);
 
@@ -118,15 +115,11 @@ ctSetCookie("%s", "%s");
         $ct_request->agent = 'magento-124';
         $ct_request->js_on = $checkjs;
         $ct_request->sender_info = $sender_info;
-        $session = Mage::getSingleton("core/session",  array("name"=>"frontend"));
-        $ct_submit_time = NULL;
-        if($session->getData("ct_submit_time")!==null)
-        $ct_submit_time = time() - $session->getData("ct_submit_time");
+        $ct_request->submit_time = isset($_COOKIE['apbct_timestamp']) ? time() - intval($_COOKIE['apbct_timestamp']) : 0;
 
         switch ($type) {
             case 'comment':
                 $timelabels_key = 'mail_error_comment';
-                $ct_request->submit_time = $ct_submit_time;
 
                 $message_title = isset($arEntity['message_title']) ? $arEntity['message_title'] : '';
                 $message_body = isset($arEntity['message_body']) ? $arEntity['message_body'] : '';
@@ -162,7 +155,6 @@ ctSetCookie("%s", "%s");
                 break;
             case 'register':
                 $timelabels_key = 'mail_error_reg';
-                $ct_request->submit_time = $ct_submit_time;
                 $ct_request->tz = isset($arEntity['user_timezone']) ? $arEntity['user_timezone'] : NULL;
                 $ct_result = $ct->isAllowUser($ct_request);
         }

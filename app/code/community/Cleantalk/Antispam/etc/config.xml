@@ -93,6 +93,13 @@
         	</args>
     	    </antispam>
 	</routers>
+            <layout>
+            <updates>
+                <antispam>
+                    <file>antispam.xml</file>
+                </antispam>
+            </updates>
+        </layout>
     </frontend>
 
 </config>
