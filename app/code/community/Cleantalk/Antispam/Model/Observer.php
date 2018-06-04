@@ -197,7 +197,7 @@ class Cleantalk_Antispam_Model_Observer
     		$dt=Array(
 		    'auth_key'=>Mage::app()->getRequest()->getPost()['cleantalk_authkey'],
 		    'method_name' => 'send_feedback',
-		    'feedback' => 0 . ':' . 'magento-124');
+		    'feedback' => 0 . ':' . 'magento-125');
 		$result=sendRawRequest($url,$dt,true);
 		return $result;
 	}

@@ -1,7 +1,7 @@
  <config>
     <modules>
         <Cleantalk_Antispam>
-            <version>1.2.4</version>
+            <version>1.2.5</version>
         </Cleantalk_Antispam>
     </modules>
     <adminhtml>
