@@ -793,7 +793,7 @@ class Cleantalk {
     }
 
     /**
-     * Function to get the message hash from Cleantalk.ru comment
+     * Function to get the message hash from Cleantalk.org comment
      * @param $message
      * @return null
      */
@@ -808,7 +808,7 @@ class Cleantalk {
     }
 
     /**
-     * Function adds to the post comment Cleantalk.ru
+     * Function adds to the post comment Cleantalk.org
      * @param $message
      * @param $comment
      * @return string
@@ -819,7 +819,7 @@ class Cleantalk {
     }
 
     /**
-     * Function deletes the comment Cleantalk.ru
+     * Function deletes the comment Cleantalk.org
      * @param $message
      * @return mixed
      */

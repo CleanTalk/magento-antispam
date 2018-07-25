@@ -276,8 +276,8 @@ ctSetCookie("%s", "%s");
             );
         else
             return array(
-                'work_url' => 'http://moderate.cleantalk.ru',
-                'server_url' => 'http://moderate.cleantalk.ru',
+                'work_url' => 'http://moderate.cleantalk.org',
+                'server_url' => 'http://moderate.cleantalk.org',
                 'server_ttl' => 0,
                 'server_changed' => 0,
             );
@@ -286,7 +286,7 @@ ctSetCookie("%s", "%s");
     /**
      * CleanTalk inner function - sets working server.
      */
-    private static function SetWorkServer($work_url = 'http://moderate.cleantalk.ru', $server_url = 'http://moderate.cleantalk.ru', $server_ttl = 0, $server_changed = 0) {
+    private static function SetWorkServer($work_url = 'http://moderate.cleantalk.org', $server_url = 'http://moderate.cleantalk.org', $server_ttl = 0, $server_changed = 0) {
         try{
             $server = Mage::getModel('antispam/server');
             $server->load(1);
