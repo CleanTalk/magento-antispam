@@ -91,6 +91,8 @@ ctSetCookie("%s", "%s");
             'post_url' => $refferrer,
             'USER_AGENT' => $user_agent,
             'REFFERRER_PREVIOUS' => isset($_COOKIE['apbct_prev_referer']) ? $_COOKIE['apbct_prev_referer'] : null,
+            'cookies_enabled' => self::CookiesTest(),
+            'fields_number' => sizeof($arEntity),
         );
         $sender_info = json_encode($sender_info);
 
@@ -311,6 +313,31 @@ ctSetCookie("%s", "%s");
      */
     static function GetCheckJSValue() {
     return md5(Mage::getStoreConfig('general/cleantalk/api_key') . '_' . Mage::getStoreConfig('trans_email/ident_general/email'));
+    }
+
+    /**
+    * Cookies test
+    */
+    private static function CookiesTest()
+    {
+        if(isset($_COOKIE['apbct_cookies_test'])){
+            
+            $cookie_test = json_decode(stripslashes($_COOKIE['apbct_cookies_test']), true);
+            
+            $check_srting = Mage::getStoreConfig('general/cleantalk/api_key');
+
+            foreach($cookie_test['cookies_names'] as $cookie_name){
+                $check_srting .= isset($_COOKIE[$cookie_name]) ? $_COOKIE[$cookie_name] : '';
+            } unset($cokie_name);
+            
+            if($cookie_test['check_value'] == md5($check_srting)){
+                return 1;
+            }else{
+                return 0;
+            }
+        }else{
+            return null;
+        }        
     }
 
 }// class Cleantalk_Antispam_Model_Api
