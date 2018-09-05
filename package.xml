@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
     <name>Cleantalk_Antispam</name>
-    <version>1.2.5</version>
+    <version>1.2.6</version>
     <stability>stable</stability>
     <license>GPL</license>
     <channel>community</channel>

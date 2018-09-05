@@ -124,7 +124,7 @@ class Cleantalk_Antispam_Model_Observer
 				}				
 			}	
 						
-			if(Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value']!==null)
+			if(isset(Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value']) && Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'] != '')
 			{
 				$new_key=Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'];
 				if($key!=$new_key&&$new_key!='')
@@ -197,7 +197,7 @@ class Cleantalk_Antispam_Model_Observer
     		$dt=Array(
 		    'auth_key'=>Mage::app()->getRequest()->getPost()['cleantalk_authkey'],
 		    'method_name' => 'send_feedback',
-		    'feedback' => 0 . ':' . 'magento-125');
+		    'feedback' => 0 . ':' . 'magento-126');
 		$result=sendRawRequest($url,$dt,true);
 		return $result;
 	}
