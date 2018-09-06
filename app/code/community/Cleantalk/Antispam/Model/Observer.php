@@ -47,7 +47,8 @@ class Cleantalk_Antispam_Model_Observer
 			{
 				Cleantalk_Antispam_Model_Observer::apbct_cookie();				
 			}	
-			if(Mage::getSingleton('admin/session')->isLoggedIn())
+
+			if(Mage::getSingleton('admin/session')->isLoggedIn() && strpos($_SERVER['PHP_SELF'],'system_config') !== false)
 			{				
 		        $last_checked=intval(Mage::getStoreConfig('general/cleantalk/last_checked'));
 				$last_status=intval(Mage::getStoreConfig('general/cleantalk/is_paid'));
@@ -83,7 +84,7 @@ class Cleantalk_Antispam_Model_Observer
 						$config->saveConfig('general/cleantalk/last_checked', $new_checked, 'default', 0);
 		    		}
 				}				
-				if(Mage::app()->getRequest()->getParam('close_notice') !== null)
+				if(Mage::app()->getRequest()->getParam('close_notice'))
 				{
 					$config = new Mage_Core_Model_Config();
 					$config->saveConfig('general/cleantalk/show_notice', 0, 'default', 0);
@@ -91,7 +92,7 @@ class Cleantalk_Antispam_Model_Observer
 					header('Location: .');
 					return false;
 				}
-				if(Mage::app()->getRequest()->getParam('get_auto_key')!== null)
+				if(Mage::app()->getRequest()->getParam('get_auto_key'))
 				{
 					require_once 'lib/cleantalk.class.php';
 					$user = Mage::getSingleton('admin/session'); 
@@ -121,17 +122,17 @@ class Cleantalk_Antispam_Model_Observer
 						return false;
 						
 					}
-				}				
+				}
+				if(Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'])
+				{
+					$new_key=Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'];
+					if($key!=$new_key&&$new_key!='')
+				    {
+				    	Cleantalk_Antispam_Model_Observer::CleantalkTestMessage($new_key);
+				    }
+				}								
 			}	
-						
-			if(isset(Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value']) && Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'] != '')
-			{
-				$new_key=Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'];
-				if($key!=$new_key&&$new_key!='')
-			    {
-			    	Cleantalk_Antispam_Model_Observer::CleantalkTestMessage($new_key);
-			    }
-			}
+		
 			
 			if(!Mage::getSingleton('admin/session')->isLoggedIn() && sizeof(Mage::app()->getRequest()->getPost())>0 && strpos($_SERVER['PHP_SELF'],'/account/create/') === false && strpos($_SERVER['REQUEST_URI'],'/account/forgotpassword/') === false && strpos($_SERVER['PHP_SELF'],'/account/login/') === false)
 			{
