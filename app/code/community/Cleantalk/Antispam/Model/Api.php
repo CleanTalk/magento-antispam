@@ -1,5 +1,7 @@
 <?php
 
+require_once(dirname(__FILE__).'/../custom_config.php');
+
 class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
 {
 
@@ -54,6 +56,16 @@ ctSetCookie("%s", "%s");
      * @return array|null Checking result or NULL when bad params
      */
     static function CheckSpam(&$arEntity, $bSendEmail = FALSE) {
+        
+        // Don't send request if current url is in exclusions list
+        $url_exclusion = CleantalkCustomConfig::get_url_exclusions();
+
+        if ($url_exclusion)
+        {
+            foreach ($url_exclusion as $key=>$value)
+                if (strpos($_SERVER['REQUEST_URI'],$value) !== false)
+                    return;
+        }
       if(!is_array($arEntity) || !array_key_exists('type', $arEntity)) return;
 
         $type = $arEntity['type'];
