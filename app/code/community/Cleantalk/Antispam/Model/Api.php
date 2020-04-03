@@ -142,7 +142,7 @@ ctSetCookie("%s", "%s");
 	            if ( isset( $arEntity['message_title'] ) ){
 		            $msg['apbct_title'] = $arEntity['message_title'];
 	            }
-	            $ct_request->message = $msg;
+	            $ct_request->message = json_encode( $msg );
 	
 	            // Example compilation
                 $example = '';
