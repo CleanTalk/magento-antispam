@@ -134,11 +134,17 @@ ctSetCookie("%s", "%s");
         switch ($type) {
             case 'comment':
                 $timelabels_key = 'mail_error_comment';
-
-                $message_title = isset($arEntity['message_title']) ? $arEntity['message_title'] : '';
-                $message_body = isset($arEntity['message_body']) ? $arEntity['message_body'] : '';
-                $ct_request->message = $message_title . " \n\n" . $message_body;
-
+                
+	            // Message compilation
+	            $msg = $arEntity['message_title'];
+	            $msg = ! empty( $msg ) ? $msg : array();
+	            $msg = is_array( $msg ) ? $msg : array( $msg );
+	            if ( isset( $arEntity['message_title'] ) ){
+		            $msg['apbct_title'] = $arEntity['message_title'];
+	            }
+	            $ct_request->message = $msg;
+	
+	            // Example compilation
                 $example = '';
                 $a_example['title'] = isset($arEntity['example_title']) ? $arEntity['example_title'] : '';
                 $a_example['body'] =  isset($arEntity['example_body']) ? $arEntity['example_body'] : '';
