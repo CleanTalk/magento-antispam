@@ -136,7 +136,7 @@ ctSetCookie("%s", "%s");
                 $timelabels_key = 'mail_error_comment';
                 
 	            // Message compilation
-	            $msg = $arEntity['message_title'];
+	            $msg = $arEntity['message_body'];
 	            $msg = ! empty( $msg ) ? $msg : array();
 	            $msg = is_array( $msg ) ? $msg : array( $msg );
 	            if ( isset( $arEntity['message_title'] ) ){
