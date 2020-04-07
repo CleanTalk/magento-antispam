@@ -56,7 +56,10 @@ ctSetCookie("%s", "%s");
      * @return array|null Checking result or NULL when bad params
      */
     static function CheckSpam(&$arEntity, $bSendEmail = FALSE) {
-        
+     
+    	// Exclusions
+	    
+	    // by URL
         // Don't send request if current url is in exclusions list
         $url_exclusion = CleantalkCustomConfig::get_url_exclusions();
 
@@ -66,11 +69,30 @@ ctSetCookie("%s", "%s");
                 if (strpos($_SERVER['REQUEST_URI'],$value) !== false)
                     return;
         }
-      if(!is_array($arEntity) || !array_key_exists('type', $arEntity)) return;
-
-        $type = $arEntity['type'];
-        if($type != 'comment' && $type != 'register') return;
-
+		if(!is_array($arEntity) || !array_key_exists('type', $arEntity)) {
+			return;
+		}
+        
+        // by Type
+        if($arEntity['type'] != 'comment' && $arEntity['type'] != 'register'){
+        	return;
+        }
+	
+        // by Data
+        if(
+            ! empty( $arEntity['message_body'] ) && is_array( $arEntity['message_body'] ) && // Msg is array
+            
+            // File upload
+            (
+            	isset( $arEntity['message_body']['Filename'], $arEntity['message_body']['Upload'] ) &&
+	            $arEntity['message_body']['Upload'] === 'Submit Query'
+            )
+        ){
+        	return;
+        }
+        
+	    $type = $arEntity['type'];
+     
     $ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
         $ct_ws = self::GetWorkServer();
 
