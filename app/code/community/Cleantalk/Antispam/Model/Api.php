@@ -58,7 +58,9 @@ ctSetCookie("%s", "%s");
     static function CheckSpam(&$arEntity, $bSendEmail = FALSE) {
      
     	// Exclusions
-	    
+        if(!Mage::getSingleton('admin/session')->isLoggedIn() && sizeof(Mage::app()->getRequest()->getPost())>0 && (strpos($_SERVER['PHP_SELF'],'/account/create') === false || strpos($_SERVER['REQUEST_URI'],'/account/forgotpassword') === false || strpos($_SERVER['PHP_SELF'],'/account/login') === false || strpos($_SERVER['REQUEST_URI'],'/account/login') === false || strpos($_SERVER['REQUEST_URI'],'/account/create') === false)) {
+            return;
+        }	    
 	    // by URL
         // Don't send request if current url is in exclusions list
         $url_exclusion = CleantalkCustomConfig::get_url_exclusions();
