@@ -134,8 +134,19 @@ class Cleantalk_Antispam_Model_Observer
 			}	
 		
 			
-			if(!Mage::getSingleton('admin/session')->isLoggedIn() && sizeof(Mage::app()->getRequest()->getPost())>0 && (strpos($_SERVER['PHP_SELF'],'/account/create') === false || strpos($_SERVER['REQUEST_URI'],'/account/forgotpassword') === false || strpos($_SERVER['PHP_SELF'],'/account/login') === false || strpos($_SERVER['REQUEST_URI'],'/account/login') === false || strpos($_SERVER['REQUEST_URI'],'/account/create') === false))
-			{
+			if(
+                ! Mage::getSingleton('admin/session')->isLoggedIn() &&
+                count( Mage::app()->getRequest()->getPost()) > 0 &&
+                (
+                    strpos( $_SERVER['PHP_SELF'], '/account/create' ) === false ||
+                    strpos( $_SERVER['PHP_SELF'], '/account/login' ) === false ||
+                    strpos( $_SERVER['REQUEST_URI'], '/account/forgotpassword' ) === false ||
+                    strpos( $_SERVER['REQUEST_URI'], '/account/login' ) === false ||
+                    strpos( $_SERVER['REQUEST_URI'], '/account/edit' ) === false ||
+                    strpos( $_SERVER['REQUEST_URI'], '/account/create' ) === false ||
+                    strpos( $_SERVER['REQUEST_URI'], '/account/createpost' ) === false
+                )
+            ){
 
 			    $isCustomForms = Mage::getStoreConfig('general/cleantalk/custom_forms');
 			    if($isCustomForms==1)

@@ -5,7 +5,7 @@ require_once(dirname(__FILE__).'/../custom_config.php');
 class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
 {
 
-    protected function _construct()
+    protected function __construct()
     {
         $this->_init('antispam/api');
     }
@@ -109,15 +109,15 @@ ctSetCookie("%s", "%s");
         $checkjs = 0;
     }
 
-        if(isset($_SERVER['HTTP_USER_AGENT']))
-            $user_agent = htmlspecialchars((string) $_SERVER['HTTP_USER_AGENT']);
-        else
-            $user_agent = NULL;
+    if(isset($_SERVER['HTTP_USER_AGENT']))
+        $user_agent = htmlspecialchars((string) $_SERVER['HTTP_USER_AGENT']);
+    else
+        $user_agent = NULL;
 
-        if(isset($_SERVER['HTTP_REFERER']))
-            $refferrer = htmlspecialchars((string) $_SERVER['HTTP_REFERER']);
-        else
-            $refferrer = NULL;
+    if(isset($_SERVER['HTTP_REFERER']))
+        $refferrer = htmlspecialchars((string) $_SERVER['HTTP_REFERER']);
+    else
+        $refferrer = NULL;
 
     $ct_language = 'en';
 
@@ -176,7 +176,7 @@ ctSetCookie("%s", "%s");
 
                 // Additional info.
                 $post_info = '';
-                $a_post_info['comment_type'] = 'comment';
+                $a_post_info['comment_type'] = isset( $arEntity['comment_type'] ) ? $arEntity['comment_type'] : 'comment';
 
                 // JSON format.
                 $example = json_encode($a_example);

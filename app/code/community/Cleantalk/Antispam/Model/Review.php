@@ -14,6 +14,7 @@ class Cleantalk_Antispam_Model_Review extends Mage_Review_Model_Review
 
         $aMessage = array();
         $aMessage['type'] = 'comment';
+        $aMessage['comment_type'] = 'comment_review';
         $aMessage['sender_email'] = '';
         $aMessage['sender_nickname'] = $this->getNickname();
         $aMessage['message_title'] = $this->getTitle();

@@ -10,6 +10,7 @@ class Cleantalk_Antispam_Contacts_IndexController extends Mage_Contacts_IndexCon
 
     	    $aMessage = array();
             $aMessage['type'] = 'comment';
+            $aMessage['comment_type'] = 'comment_contact';
             $aMessage['sender_email'] = isset($post['email']) ? $post['email'] : '';
             $aMessage['sender_nickname'] = isset($post['name']) ? $post['name'] : '';
             $aMessage['message_title'] = isset($post['telephone']) ? $post['telephone'] : '';
