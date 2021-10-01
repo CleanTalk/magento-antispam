@@ -5,7 +5,7 @@ require_once(dirname(__FILE__).'/../custom_config.php');
 class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
 {
 
-    protected function __construct()
+    public function __construct()
     {
         $this->_init('antispam/api');
     }
