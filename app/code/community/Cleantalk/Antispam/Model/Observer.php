@@ -207,11 +207,10 @@ class Cleantalk_Antispam_Model_Observer
 		require_once 'lib/cleantalk.class.php';
     		$url = 'http://moderate.cleantalk.org/api2.0';
     		$dt=Array(
-		    'auth_key'=>Mage::app()->getRequest()->getPost()['cleantalk_authkey'],
+		    'auth_key'=>$key,
 		    'method_name' => 'send_feedback',
 		    'feedback' => 0 . ':' . 'magento-128');
-		$result=sendRawRequest($url,$dt,true);
-		return $result;
+		return sendRawRequest($url,$dt,true);
 	}
 	
 	/**
