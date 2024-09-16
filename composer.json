@@ -1,0 +1,15 @@
+{
+  "name": "cleantalk/magento-anti-spam",
+  "type": "magento-module",
+  "description": "Magento 1 Community - CleanTalk Magento Anti-spam",
+  "homepage": "https://www.cleantalk.org/",
+  "require": {
+    "magento-hackathon/magento-composer-installer": "*"
+  },
+  "authors": [
+    {
+      "name": "CleanTalk",
+      "role": "Author/Maintainer"
+    }
+  ]
+}
