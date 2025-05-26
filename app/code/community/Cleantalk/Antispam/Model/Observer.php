@@ -24,7 +24,7 @@ class Cleantalk_Antispam_Model_Observer
 			if(trim($api_key)=='')
 			{
 				Mage::app()->cleanCache();
-				$user = Mage::getSingleton('admin/session'); 
+				$user = Mage::getSingleton('admin/session');
 				$admin_email = $user->getUser()->getEmail();
 				$button="<input type='button' style='margin-top:5px;-webkit-border-bottom-left-radius: 5px;-webkit-border-bottom-right-radius: 5px;-webkit-border-radius: 5px;-webkit-border-top-left-radius: 5px;-webkit-border-top-right-radius: 5px;background: #3399FF;border-radius: 5px;box-sizing: border-box;color: #FFFFFF;font: normal normal 400 14px/16.2px \"Open Sans\";padding:3px;border:0px none;cursor:pointer;' value='Get access key automatically' onclick='location.href=\"?get_auto_key=1\"'><br /><a target='_blank' href='https://cleantalk.org/register?platform=magento&email=".$admin_email."&website=".$_SERVER['HTTP_HOST']."'>Click here to get access key manually</a><br />Admin e-mail (".$admin_email.") will be used for registration<br /><a target='__blank' href='http://cleantalk.org/publicoffer' style='color:#e5e5e5'>License agreement</a>";
 				$html=str_replace('%LINK_TEXT%',$button,$html);
@@ -35,25 +35,25 @@ class Cleantalk_Antispam_Model_Observer
 			}
 			$transport->setHtml($html);
 		}
-		
+
 	}
 	public function interceptQuery(Varien_Event_Observer $observer)
 	{
 		if (strpos($_SERVER['PHP_SELF'],'/downloader/') === false)
 		{
 			Mage::getSingleton('core/session', array('name'=>'adminhtml'));
-			$key=Mage::getStoreConfig('general/cleantalk/api_key');	
+			$key=Mage::getStoreConfig('general/cleantalk/api_key');
 			if ($key !== '')
 			{
-				Cleantalk_Antispam_Model_Observer::apbct_cookie();				
-			}	
+				Cleantalk_Antispam_Model_Observer::apbct_cookie();
+			}
 
 			if(Mage::getSingleton('admin/session')->isLoggedIn() && strpos($_SERVER['PHP_SELF'],'system_config') !== false)
-			{				
+			{
 		        $last_checked=intval(Mage::getStoreConfig('general/cleantalk/last_checked'));
 				$last_status=intval(Mage::getStoreConfig('general/cleantalk/is_paid'));
 				$new_checked=time();
-				
+
 				if($key!='')
 				{
 					$new_status=$last_status;
@@ -83,7 +83,7 @@ class Cleantalk_Antispam_Model_Observer
 			    		$config = new Mage_Core_Model_Config();
 						$config->saveConfig('general/cleantalk/last_checked', $new_checked, 'default', 0);
 		    		}
-				}				
+				}
 				if(Mage::app()->getRequest()->getParam('close_notice'))
 				{
 					$config = new Mage_Core_Model_Config();
@@ -95,7 +95,7 @@ class Cleantalk_Antispam_Model_Observer
 				if(Mage::app()->getRequest()->getParam('get_auto_key'))
 				{
 					require_once 'lib/cleantalk.class.php';
-					$user = Mage::getSingleton('admin/session'); 
+					$user = Mage::getSingleton('admin/session');
 					$admin_email = $user->getUser()->getEmail();
 					$site=$_SERVER['HTTP_HOST'];
 					$result = getAutoKey($admin_email,$site,'magento');
@@ -120,20 +120,21 @@ class Cleantalk_Antispam_Model_Observer
 						}
 						header('Location: .');
 						return false;
-						
+
 					}
 				}
-				if(Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'])
+                $container = Mage::app()->getRequest()->getPost();
+				if(!empty($container) && isset($container['groups']['cleantalk']['fields']['api_key']['value']))
 				{
 					$new_key=Mage::app()->getRequest()->getPost()['groups']['cleantalk']['fields']['api_key']['value'];
 					if($key!=$new_key&&$new_key!='')
 				    {
 				    	Cleantalk_Antispam_Model_Observer::CleantalkTestMessage($new_key);
 				    }
-				}								
-			}	
-		
-			
+				}
+			}
+
+
 			if(!Mage::getSingleton('admin/session')->isLoggedIn() && sizeof(Mage::app()->getRequest()->getPost())>0 && (strpos($_SERVER['PHP_SELF'],'/account/create') === false || strpos($_SERVER['REQUEST_URI'],'/account/forgotpassword') === false || strpos($_SERVER['PHP_SELF'],'/account/login') === false || strpos($_SERVER['REQUEST_URI'],'/account/login') === false || strpos($_SERVER['REQUEST_URI'],'/account/create') === false))
 			{
 
@@ -157,7 +158,7 @@ class Cleantalk_Antispam_Model_Observer
 					if ($aMessage['send_request'])
 					{
 						$aResult = $model->CheckSpam($aMessage, FALSE);
-						
+
 						if(isset($aResult) && is_array($aResult))
 						{
 							if($aResult['errno'] == 0)
@@ -177,17 +178,17 @@ class Cleantalk_Antispam_Model_Observer
 									Mage::getModel('antispam/api')->CleantalkDie($comment_str);
 								}
 							}
-						}					
+						}
 					}
 
 				}
 			    }
-			}			
+			}
 		}
 
 	}
-	
-	
+
+
 	/*
 	* Sends test message when api key is changed
 	*/
@@ -196,20 +197,20 @@ class Cleantalk_Antispam_Model_Observer
 		require_once 'lib/cleantalk.class.php';
     		$url = 'http://moderate.cleantalk.org/api2.0';
     		$dt=Array(
-		    'auth_key'=>Mage::app()->getRequest()->getPost()['cleantalk_authkey'],
+		    'auth_key'=>$key,
 		    'method_name' => 'send_feedback',
 		    'feedback' => 0 . ':' . 'magento-127');
 		$result=sendRawRequest($url,$dt,true);
 		return $result;
 	}
-	
+
 	/**
      * Get all fields from array
      * @param string email variable
      * @param string message variable
      * @param array array, containing fields
      */
-    
+
     static function cleantalkGetFields($arr, $message=array(), $email = null, $nickname = array('nick' => '', 'first' => '', 'last' => ''), $subject = null, $contact = true, $prev_name = '')
 	{
         //Skip request if fields exists
@@ -217,12 +218,12 @@ class Cleantalk_Antispam_Model_Observer
             'ipn_track_id',     // PayPal IPN #
             'txn_type',         // PayPal transaction type
             'payment_status',   // PayPal payment status
-            'ccbill_ipn',       // CCBill IPN 
+            'ccbill_ipn',       // CCBill IPN
             'ct_checkjs',       // skip ct_checkjs field
             'api_mode',         // DigiStore-API
             'loadLastCommentId' // Plugin: WP Discuz. ticket_id=5571
         );
-        
+
         // Fields to replace with ****
         $obfuscate_params = array(
             'password',
@@ -231,9 +232,9 @@ class Cleantalk_Antispam_Model_Observer
             'pwd',
             'pswd'
         );
-        
+
         // Skip feilds with these strings and known service fields
-        $skip_fields_with_strings = array( 
+        $skip_fields_with_strings = array(
             // Common
             'ct_checkjs', //Do not send ct_checkjs
             'nonce', //nonce for strings such as 'rsvp_nonce_name'
@@ -264,7 +265,7 @@ class Cleantalk_Antispam_Model_Observer
             'formData_id',
             'formData_settings',
             'formData_fields_\d+_id',
-            'formData_fields_\d+_files.*',      
+            'formData_fields_\d+_files.*',
             // E_signature
             'recipient_signature',
             'output_\d+_\w{0,2}',
@@ -283,17 +284,17 @@ class Cleantalk_Antispam_Model_Observer
             'product',
 
         );
-                
+
         foreach($skip_params as $value){
             if(array_key_exists($value,$_POST))
             {
                 $contact = false;
             }
         } unset($value);
-            
+
         if(count($arr)){
             foreach($arr as $key => $value){
-                
+
                 if(gettype($value)=='string'){
                     $decoded_json_value = json_decode($value, true);
                     if($decoded_json_value !== null)
@@ -301,19 +302,19 @@ class Cleantalk_Antispam_Model_Observer
                         $value = $decoded_json_value;
                     }
                 }
-                
+
                 if(!is_array($value) && !is_object($value)){
-                    
+
                     if (in_array($key, $skip_params, true) && $key != 0 && $key != '' || preg_match("/^ct_checkjs/", $key))
                     {
                         $contact = false;
                     }
-                    
+
                     if($value === '')
                     {
                         continue;
                     }
-                    
+
                     // Skipping fields names with strings from (array)skip_fields_with_strings
                     foreach($skip_fields_with_strings as $needle){
                         if (preg_match("/".$needle."/", $prev_name.$key) == 1){
@@ -326,22 +327,22 @@ class Cleantalk_Antispam_Model_Observer
                             $value = Cleantalk_Antispam_Model_Observer::obfuscate_param($value);
                         }
                     }unset($needle);
-                    
+
 
                     // Decodes URL-encoded data to string.
-                    $value = urldecode($value); 
+                    $value = urldecode($value);
 
                     // Email
                     if (!$email && preg_match("/^\S+@\S+\.\S+$/", $value)){
                         $email = $value;
-                        
+
                     // Names
                     }elseif (preg_match("/name/i", $key)){
-                        
+
                         preg_match("/(first.?name)?(name.?first)?(forename)?/", $key, $match_forename);
                         preg_match("/(last.?name)?(family.?name)?(second.?name)?(surname)?/", $key, $match_surname);
                         preg_match("/(nick.?name)?(user.?name)?(nick)?/", $key, $match_nickname);
-                        
+
                         if(count($match_forename) > 1)
                         {
                             $nickname['first'] = $value;
@@ -358,26 +359,26 @@ class Cleantalk_Antispam_Model_Observer
                         {
                             $message[$prev_name.$key] = $value;
                         }
-                    
+
                     // Subject
                     }elseif ($subject === null && preg_match("/subject/i", $key)){
                         $subject = $value;
-                    
+
                     // Message
                     }else{
-                        $message[$prev_name.$key] = $value;                 
+                        $message[$prev_name.$key] = $value;
                     }
-                    
+
                 }elseif(!is_object($value)){
-                    
+
                     $prev_name_original = $prev_name;
                     $prev_name = ($prev_name === '' ? $key.'_' : $prev_name.$key.'_');
-                    
+
                     $temp = Cleantalk_Antispam_Model_Observer::cleantalkGetFields($value, $message, $email, $nickname, $subject, $contact, $prev_name);
-                    
+
                     $message    = $temp['message'];
                     $email      = ($temp['email']       ? $temp['email'] : null);
-                    $nickname   = ($temp['nickname']    ? $temp['nickname'] : null);                
+                    $nickname   = ($temp['nickname']    ? $temp['nickname'] : null);
                     $subject    = ($temp['subject']     ? $temp['subject'] : null);
                     if($contact === true)
                     {
@@ -387,7 +388,7 @@ class Cleantalk_Antispam_Model_Observer
                 }
             } unset($key, $value);
         }
-                
+
         //If top iteration, returns compiled name field. Example: "Nickname Firtsname Lastname".
         if($prev_name === ''){
             if(!empty($nickname)){
@@ -398,14 +399,14 @@ class Cleantalk_Antispam_Model_Observer
             }
             $nickname = $nickname_str;
         }
-        
+
         $return_param = array(
             'email'     => $email,
             'nickname'  => $nickname,
             'subject'   => $subject,
             'contact'   => $contact,
             'message'   => $message
-        );  
+        );
         return $return_param;
 	}
 	    /**
@@ -418,15 +419,15 @@ class Cleantalk_Antispam_Model_Observer
             $value = str_repeat('*', $length);
         }
         return $value;
-    } 
+    }
 	public function apbct_cookie()
 	{
-	      
+
 	  // Cookie names to validate
 	  $cookie_test_value = array(
 	      'cookies_names' => array(),
 	      'check_value' => Mage::getStoreConfig('general/cleantalk/api_key'),
-	  );  
+	  );
 
 	  // Submit time
 	  $apbct_timestamp = time();
