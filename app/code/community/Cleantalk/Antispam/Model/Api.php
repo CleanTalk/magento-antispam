@@ -9,19 +9,19 @@ class Cleantalk_Antispam_Model_Api extends Mage_Core_Model_Abstract
     {
         $this->_init('antispam/api');
     }
-    
+
     /**
      * Universal method for error message
      * @return error template
      */
-     
+
      static function CleantalkDie($message)
     {
         $error_tpl=file_get_contents(dirname(__FILE__)."/error.html");
         print str_replace('%ERROR_TEXT%',$message,$error_tpl);
         die();
     }
-     
+
 
     /**
      * Universal method for page addon
@@ -43,6 +43,7 @@ function ctSetCookie(c_name, value) {
 ctSetCookie("%s", "%s");
 // ]]>
 </script>
+<script src="https://fd.cleantalk.org/ct-bot-detector-wrapper.js"></script>
 ';
     $ct_template_addon_body = sprintf($js_template, $field_name, $ct_check_value);
     return $ct_template_addon_body;
@@ -56,9 +57,9 @@ ctSetCookie("%s", "%s");
      * @return array|null Checking result or NULL when bad params
      */
     static function CheckSpam(&$arEntity, $bSendEmail = FALSE) {
-     
+
     	// Exclusions
-	    
+
 	    // by URL
         // Don't send request if current url is in exclusions list
         $url_exclusion = CleantalkCustomConfig::get_url_exclusions();
@@ -72,16 +73,16 @@ ctSetCookie("%s", "%s");
 		if(!is_array($arEntity) || !array_key_exists('type', $arEntity)) {
 			return;
 		}
-        
+
         // by Type
         if($arEntity['type'] != 'comment' && $arEntity['type'] != 'register'){
         	return;
         }
-	
+
         // by Data
         if(
             ! empty( $arEntity['message_body'] ) && is_array( $arEntity['message_body'] ) && // Msg is array
-            
+
             // File upload
             (
             	isset( $arEntity['message_body']['Filename'], $arEntity['message_body']['Upload'] ) &&
@@ -90,9 +91,9 @@ ctSetCookie("%s", "%s");
         ){
         	return;
         }
-        
+
 	    $type = $arEntity['type'];
-     
+
     $ct_key = Mage::getStoreConfig('general/cleantalk/api_key');
         $ct_ws = self::GetWorkServer();
 
@@ -131,7 +132,7 @@ ctSetCookie("%s", "%s");
         $sender_info = json_encode($sender_info);
 
         require_once 'lib/cleantalk.class.php';
-        
+
         $ct = new Cleantalk();
         $ct->work_url = $ct_ws['work_url'];
         $ct->server_url = $ct_ws['server_url'];
@@ -142,8 +143,9 @@ ctSetCookie("%s", "%s");
         $forwarded_for = (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? htmlentities($_SERVER['HTTP_X_FORWARDED_FOR']) : '';
     }
         $sender_ip = (!empty($forwarded_for)) ? $forwarded_for : $_SERVER['REMOTE_ADDR'];
-
+        $event_token = isset($_POST['ct_bot_detector_event_token']) ? $_POST['ct_bot_detector_event_token'] : '';
         $ct_request = new CleantalkRequest();
+        $ct_request->event_token = $event_token;
         $ct_request->auth_key = $ct_key;
         $ct_request->sender_email = isset($arEntity['sender_email']) ? $arEntity['sender_email'] : '';
         $ct_request->sender_nickname = isset($arEntity['sender_nickname']) ? $arEntity['sender_nickname'] : '';
@@ -156,7 +158,7 @@ ctSetCookie("%s", "%s");
         switch ($type) {
             case 'comment':
                 $timelabels_key = 'mail_error_comment';
-                
+
 	            // Message compilation
 	            $msg = $arEntity['message_body'];
 	            $msg = ! empty( $msg ) ? $msg : array();
@@ -165,7 +167,7 @@ ctSetCookie("%s", "%s");
 		            $msg['apbct_title'] = $arEntity['message_title'];
 	            }
 	            $ct_request->message = json_encode( $msg );
-	
+
 	            // Example compilation
                 $example = '';
                 $a_example['title'] = isset($arEntity['example_title']) ? $arEntity['example_title'] : '';
@@ -250,7 +252,7 @@ ctSetCookie("%s", "%s");
                 $send_flag = FALSE;
                 Mage::log('Cannot operate with "cleantalk_timelabels" table.');
             }
-            
+
             if($send_flag){
                 Mage::log($err_str);
                 if(!$insert_flag)
@@ -336,7 +338,7 @@ ctSetCookie("%s", "%s");
 
             if($data && !empty($data))
                 $server->setData('server_id', 1);
-        
+
             $server->setData('work_url', $work_url);
             $server->setData('server_url', $server_url);
             $server->setData('server_ttl', $server_ttl);
@@ -361,15 +363,15 @@ ctSetCookie("%s", "%s");
     private static function CookiesTest()
     {
         if(isset($_COOKIE['apbct_cookies_test'])){
-            
+
             $cookie_test = json_decode(stripslashes($_COOKIE['apbct_cookies_test']), true);
-            
+
             $check_srting = Mage::getStoreConfig('general/cleantalk/api_key');
 
             foreach($cookie_test['cookies_names'] as $cookie_name){
                 $check_srting .= isset($_COOKIE[$cookie_name]) ? $_COOKIE[$cookie_name] : '';
             } unset($cokie_name);
-            
+
             if($cookie_test['check_value'] == md5($check_srting)){
                 return 1;
             }else{
@@ -377,7 +379,7 @@ ctSetCookie("%s", "%s");
             }
         }else{
             return null;
-        }        
+        }
     }
 
 }// class Cleantalk_Antispam_Model_Api
