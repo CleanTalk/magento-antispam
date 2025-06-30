@@ -11,7 +11,7 @@
     <global>
 	<rewrite>
     	    <cleantalk_antispam_account_createPost>
-    		<from><![CDATA[#^/customer/account/createpost/$#]]></from>
+    		<from><![CDATA[#^/customer/account/createpost/?$#]]></from>
     		<to>/antispam/customer_account/createpost</to>
     	    </cleantalk_antispam_account_createPost>
 	    <cleantalk_antispam_index_post>
